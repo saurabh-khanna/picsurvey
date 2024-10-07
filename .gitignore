@@ -1,0 +1,10 @@
+.DS_Store
+.Rproj.user/
+picsurvey.Rproj
+.vscode/
+
+firestore-key.json
+key-to-toml.py
+secrets.toml
+
+user_selections.csv
