@@ -87,7 +87,7 @@ if st.session_state.consent_given:
             time.sleep(1)
             progress_text = ":green[Time taken: " + str(i) + " second]"
         elif i == 5:
-            progress_text = ":red[Time taken: " + str(i) + " seconds!!!]"
+            progress_text = ":red[Time taken: More than " + str(i) + " seconds!!!]"
         else:
             progress_text = ":green[Time taken: " + str(i) + " seconds]"
         progress_bar.progress(i * 20, text=progress_text)  # i goes from 1 to 5, converting to percentage (20, 40, ..., 100)
