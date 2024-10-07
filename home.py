@@ -112,7 +112,7 @@ if st.session_state.consent_given and not st.session_state.survey_ended:
 
 
     st.write("&nbsp;")
-    st.write("🕰️ Try to answer in less than 5 seconds...")
+    st.write("🕰️ Try to answer as fast as you can...")
     progress_bar = st.progress(0)
 
     # Loop from 1 to 5 seconds to update the progress bar
