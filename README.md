@@ -1,6 +1,6 @@
 # 📷 Picsurvey
 
-Welcome to surveys using _PictoPercept_! We study how humans make choices when navigating the internet.
+Welcome to surveys using PictoPercept! We study how humans make choices when navigating the internet.
 
 ![](data/fairface/nomargin/changeface.gif)
 
