@@ -67,8 +67,8 @@ if st.session_state.consent_given:
     
     if time_elapsed.total_seconds() > 125 and len(st.session_state.responses_df) >= 2:
         # write to db here
-        st.link_button(label="Exit this tool!", url="https://surveys.thechoice.nl/s3/UVA2305-PictoPercept-Complete", type="primary", help = "You can leave this survey by cklicking here.", use_container_width=True)
-    
+        st.markdown('<span style="font-size:24px;"><a href="https://surveys.thechoice.nl/s3/UVA2305-PictoPercept-Complete" target="_self">Exit this tool!</a></span>', unsafe_allow_html=True)
+        
     else:
         st.write("&nbsp;")
         
@@ -114,7 +114,7 @@ if st.session_state.consent_given:
             col2.image(image2, use_column_width="always")
 
         st.write("&nbsp;")
-        progress_bar = st.progress(0)
+        progress_bar = st.progress(0, text = "⏰ Try to answer as fast as you can.")
 
         # Loop from 1 to 5 seconds to update the progress bar
         for i in range(1, 6):
