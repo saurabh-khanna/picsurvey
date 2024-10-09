@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import uuid
 import time
 import datetime
 import random
@@ -24,6 +23,9 @@ if "userid" not in st.session_state:
         st.session_state.userid = str(st.query_params.choice_respondent)
     else:
         st.session_state.userid = "id_not_found"
+
+st.sidebar.write(st.query_params)
+st.sidebar.write("User ID: " + st.session_state.userid)
 
 # Initialize responses DataFrame if not already in session
 if "responses_df" not in st.session_state:
@@ -128,5 +130,3 @@ if st.session_state.consent_given:
                 progress_text = "⏰ Try to answer as fast as you can. Time taken: " + str(i) + " seconds"
             progress_bar.progress(i * 20, text=progress_text)  # i goes from 1 to 5, converting to percentage (20, 40, ..., 100)
             time.sleep(1)
-
-st.sidebar.info("User ID: " + st.session_state.userid)
