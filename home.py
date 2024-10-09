@@ -19,13 +19,12 @@ st.markdown(
 
 # Initialize user ID and DataFrame if not already in session
 if "userid" not in st.session_state:
-    if "choice_respodent" in st.query_params:
+    if "choice_respondent" in st.query_params:
         st.session_state.userid = str(st.query_params.choice_respondent)
     else:
-        st.session_state.userid = "id_not_found"
+        st.session_state.userid = "unresolved_" + str(random.randint(10000, 99999))
 
-st.sidebar.write(st.query_params)
-st.sidebar.write("User ID: " + st.session_state.userid)
+st.sidebar.info("userid: " + st.session_state.userid)
 
 # Initialize responses DataFrame if not already in session
 if "responses_df" not in st.session_state:
