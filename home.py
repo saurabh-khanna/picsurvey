@@ -65,10 +65,10 @@ if st.session_state.consent_given:
     
     ### Exit button ###
     time_elapsed = datetime.datetime.now() - st.session_state.start_time
-    st.sidebar.info("time: " + str(time_elapsed.total_seconds()) + "s")
     if time_elapsed.total_seconds() > 125 and len(st.session_state.responses_df) >= 2:
         # write to db here
-        st.markdown('<span style="font-size:24px;"><a href="https://surveys.thechoice.nl/s3/UVA2305-PictoPercept-Complete" target="_self">Exit this tool!</a></span>', unsafe_allow_html=True)
+        redirect_link = "https://surveys.thechoice.nl/s3/UVA2305-PictoPercept-Complete?choice_respondent=" + st.session_state.userid
+        st.markdown('<span style="font-size:24px;"><a href=' + redirect_link + ' target="_self">Click here to exit this tool!</a></span>', unsafe_allow_html=True)
         
     else:
         st.write("&nbsp;")

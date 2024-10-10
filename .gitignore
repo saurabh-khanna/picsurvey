@@ -7,4 +7,4 @@ firestore-key.json
 key-to-toml.py
 secrets.toml
 
-user_selections.csv
+*.ipynb
