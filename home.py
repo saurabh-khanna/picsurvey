@@ -39,15 +39,12 @@ if not st.session_state.consent_given:
     st.title("📷 PictoPercept")
     st.write("&nbsp;")
     st.write("""
-            Welcome to the PictoPercept survey! You'll see pairs of photos and a job title, like "Who of these is a teacher?" or "Who of these is a painter?"
+            Welkom bij PictoPercept! Je ziet paren foto's en een functietitel, zoals "Wie van deze is een leraar?" of "Wie van deze is een kapper?" Kies de persoon die volgens jou het beste bij de functie past door op de knop te klikken.
 
-            1. Pick the person you think fits the job more by clicking the button.
-            2. Answer as fast as you can — try for 5 seconds or less.
-
-            Trust your instincts!
+            Vertrouw op je instinct!
             """)
     st.write("&nbsp;")
-    if st.button("Let us begin!", type="primary", use_container_width=True):
+    if st.button("Laten we beginnen!", type="primary", use_container_width=True):
         st.session_state.consent_given = True
         st.rerun()
 
@@ -62,7 +59,11 @@ if st.session_state.consent_given:
         st.session_state.data = df[["file"]]
         st.session_state.index = 0
         st.session_state.start_time = datetime.datetime.now()
-    
+
+    ### Randomization of progress bar and timer ###
+    if "show_timer_progress" not in st.session_state:
+        st.session_state.show_timer_progress = random.choice([True, False])  # Randomly choose to show or not
+
     ### Exit button ###
     time_elapsed = datetime.datetime.now() - st.session_state.start_time
     if time_elapsed.total_seconds() > 65 and len(st.session_state.responses_df) >= 2:
@@ -73,10 +74,22 @@ if st.session_state.consent_given:
     else:
         st.write("&nbsp;")
         
-        # List of non-gendered occupations
-        occupations = ['a doctor', 'a lawyer', 'a nurse', 'an author', 'a teacher', 'an engineer', 'a scientist', 'a chef', 'an artist', 'an architect', 'a pilot', 'a journalist', 'a dentist', 'a therapist', 'an accountant', 'a musician', 'a designer', 'a programmer', 'a pharmacist', 'a plumber', 'an electrician', 'a librarian', 'an analyst', 'a consultant', 'an entrepreneur', 'a researcher', 'a technician', 'an editor', 'a translator', 'a veterinarian', 'a social worker', 'a photographer']
+        # Lijst van niet-geslachtsgebonden beroepen
+        occupations = [
+            "een dokter",
+            "een astronaut",
+            "een financieel directeur",
+            "een wetenschapper",
+            "een politieagent",
+            "een bouwvakker",
+            "een elektromonteur",
+            "een verpleegkundige",
+            "een kapper",
+            "een leerkracht"
+        ]
         job = str(random.choice(occupations))
-        TEXT = "<span style='font-size:24px;'>Who of these is _**" + job + "**_?</span>"
+        TEXT = "<span style='font-size:24px;'>Wie van deze personen is _**" + job + "**_?</span>"
+
 
         st.write(TEXT, unsafe_allow_html=True)
 
@@ -98,34 +111,68 @@ if st.session_state.consent_given:
             # next run now!
             st.session_state.index += 2
         
+        def save_response(selected):
+            current_time = datetime.datetime.now()
+            st.session_state.responses_df = pd.concat([
+                st.session_state.responses_df,
+                pd.DataFrame([
+                    {
+                        'userid': st.session_state.userid,
+                        'item': (current_index // 2) + 1,
+                        'file': image1.replace("data/fairface/nomargin/", ""),
+                        'job': job,
+                        'chosen': selected == 1,
+                        'timestamp': current_time.strftime("%Y-%m-%d %H:%M:%S"),
+                        'show_timer_progress': st.session_state.show_timer_progress  # Save the randomized decision
+                    },
+                    {
+                        'userid': st.session_state.userid,
+                        'item': (current_index // 2) + 1,
+                        'file': image2.replace("data/fairface/nomargin/", ""),
+                        'job': job,
+                        'chosen': selected == 2,
+                        'timestamp': current_time.strftime("%Y-%m-%d %H:%M:%S"),
+                        'show_timer_progress': st.session_state.show_timer_progress  # Save the randomized decision
+                    }
+                ])
+            ], ignore_index=True)
+            # Next run now!
+            st.session_state.index += 2
+
+
         ### Main Buttons Display ###
 
         with st.container(border=True):
             col1, col2 = st.columns(2, gap="large")
             with col1:
                 button1 = st.button(
-                    "Person 1", type="primary", key="btn1", on_click=save_response, args=[1], use_container_width=True
+                    "Persoon 1", type="primary", key="btn1", on_click=save_response, args=[1], use_container_width=True
                 )
             with col2:
                 button2 = st.button(
-                    "Person 2", type="primary", key="btn2", on_click=save_response, args=[2], use_container_width=True
+                    "Persoon 2", type="primary", key="btn2", on_click=save_response, args=[2], use_container_width=True
                 )
             
             col1.image(image1, use_column_width="always")
             col2.image(image2, use_column_width="always")
 
         st.write("&nbsp;")
-        progress_bar = st.progress(0, text = "⏰ Try to answer as fast as you can.")
+        
+        # Only show the timer and progress bar to 50% of users
+        if st.session_state.show_timer_progress:
+            progress_bar = st.progress(0, text = "⏰ Probeer zo snel mogelijk te antwoorden.")
 
-        # Loop from 1 to 5 seconds to update the progress bar
-        for i in range(1, 6):
-            # Update the progress bar incrementally (each step is 20% progress)
-            if i == 1:
+            # Loop from 1 to 5 seconds to update the progress bar
+            for i in range(1, 6):
+                # Update the progress bar incrementally (each step is 20% progress)
+                if i == 1:
+                    time.sleep(1)
+                    progress_text = "⏰ Probeer zo snel mogelijk te antwoorden. Tijdsduur: 1 seconde"
+                elif i == 5:
+                    progress_text = ":red[⏰ Probeer zo snel mogelijk te antwoorden. Tijdsduur: Meer dan 5 seconden!]"
+                else:
+                    progress_text = "⏰ Probeer zo snel mogelijk te antwoorden. Tijdsduur: " + str(i) + " seconden"
+                progress_bar.progress(i * 20, text=progress_text)  # i goes from 1 to 5, converting to percentage (20, 40, ..., 100)
                 time.sleep(1)
-                progress_text = "⏰ Try to answer as fast as you can. Time taken: " + str(i) + " second"
-            elif i == 5:
-                progress_text = ":red[⏰ Try to answer as fast as you can. Time taken: More than " + str(i) + " seconds!]"
-            else:
-                progress_text = "⏰ Try to answer as fast as you can. Time taken: " + str(i) + " seconds"
-            progress_bar.progress(i * 20, text=progress_text)  # i goes from 1 to 5, converting to percentage (20, 40, ..., 100)
-            time.sleep(1)
+
+    # st.dataframe(st.session_state.responses_df)
