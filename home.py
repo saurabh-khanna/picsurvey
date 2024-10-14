@@ -102,9 +102,10 @@ if st.session_state.consent_given:
     if time_elapsed.total_seconds() > 65 and len(st.session_state.responses_df) >= 2:
 
         # write to db here
-        recordlist = st.session_state.responses_df.to_dict(orient='records')
-        for record in recordlist:
-            write_to_firestore(record)
+        with st.spinner('Saving your responses...'):
+            recordlist = st.session_state.responses_df.to_dict(orient='records')
+            for record in recordlist:
+                write_to_firestore(record)
 
         redirect_link = f"https://surveys.thechoice.nl/s3/UVA2305-PictoPercept-Complete?choice_respondent={st.session_state.userid}"
         st.markdown(f'<span style="font-size:20px;"><a href="{redirect_link}" target="_self">Click here to exit this tool!</a></span>', unsafe_allow_html=True)
