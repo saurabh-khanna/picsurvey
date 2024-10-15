@@ -67,11 +67,23 @@ if "consent_given" not in st.session_state:
 if not st.session_state.consent_given:
     st.title("📷 PictoPercept")
     st.write("&nbsp;")
-    st.write("""
-            Welkom bij PictoPercept! Je ziet paren foto's en functietitel, zoals "Wie van deze is leraar?" of "Wie van deze is kapper?" Kies de persoon die volgens jou het beste bij de functie past door op de knop te klikken.
 
-            Vertrouw op je instinct!
-            """)
+    col1_land, col2_land = st.columns([1, 1.618])
+
+    with col1_land:
+        with st.container(border=True):
+            st.image("./data/fairface/nomargin/changeface.gif")
+    with col2_land:
+        st.write("""
+                U bent nu bij PictoPercept - het laatste deel van de vragenlijst! Dit duurt in totaal **1 minuut**.
+
+                U blijft twee foto's van gewone mensen zien van sociale media. En een beroep. Bijvoorbeeld: "Wie van deze personen is een leraar?" of "Wie van deze personen is een kapper?"
+
+                Kies de persoon waarvan u denkt dat hij dat beroep heeft. Vertrouw op uw instinct!
+
+                Na 60 seconden gaat u terug naar de vragenlijst.
+                """)
+    
     st.write("&nbsp;")
     if st.button("Laten we beginnen!", type="primary", use_container_width=True):
         st.session_state.consent_given = True
@@ -100,15 +112,24 @@ if st.session_state.consent_given:
     ### Exit button ###
     time_elapsed = datetime.datetime.now() - st.session_state.start_time
     if time_elapsed.total_seconds() > 65 and len(st.session_state.responses_df) >= 2:
+        
+        # Write to db here
+        recordlist = st.session_state.responses_df.to_dict(orient='records')
 
-        # write to db here
-        with st.spinner('Saving your responses...'):
-            recordlist = st.session_state.responses_df.to_dict(orient='records')
-            for record in recordlist:
-                write_to_firestore(record)
+        progress_bar = st.progress(0)
+        status_text = st.empty()
 
+        for idx, record in enumerate(recordlist):
+            write_to_firestore(record)
+            progress = (idx + 1) / len(recordlist)
+            progress_bar.progress(progress)
+            status_text.text(f"Uw antwoorden opslaan: {int(progress * 100)}%")
+
+        # Completion message
+        status_text.text("Alles is klaar!")
+        st.write("&nbsp;")
         redirect_link = f"https://surveys.thechoice.nl/s3/UVA2305-PictoPercept-Complete?choice_respondent={st.session_state.userid}"
-        st.markdown(f'<span style="font-size:20px;"><a href="{redirect_link}" target="_self">Click here to exit this tool!</a></span>', unsafe_allow_html=True)
+        st.markdown(f'<span style="font-size:20px;"><a href="{redirect_link}" target="_self">Geweldig, bedankt! Vul hier de vragenlijst in.</a></span>', unsafe_allow_html=True)
         
     else:
         st.write("&nbsp;")
@@ -118,12 +139,17 @@ if st.session_state.consent_given:
         if current_index == 4:  # Attention check at iteration 3 (remember 0-based indexing)
             image1 = "data/fairface/nomargin/" + st.session_state.attention_check_pair.iloc[0]["file"]
             image2 = "data/fairface/nomargin/" + st.session_state.attention_check_pair.iloc[1]["file"]
-            job = st.session_state.attention_check_job  # Use the same job for both attention checks
+            job = st.session_state.attention_check_job  # Use the same job for all attention checks
             is_attention_check = True
         elif current_index == 18:  # Attention check at iteration 10 (swapped images)
             image1 = "data/fairface/nomargin/" + st.session_state.attention_check_pair.iloc[1]["file"]
             image2 = "data/fairface/nomargin/" + st.session_state.attention_check_pair.iloc[0]["file"]
-            job = st.session_state.attention_check_job  # Use the same job for both attention checks
+            job = st.session_state.attention_check_job  # Use the same job for all attention checks
+            is_attention_check = True
+        elif current_index == 40:  # Attention check at iteration 21 (original order images)
+            image1 = "data/fairface/nomargin/" + st.session_state.attention_check_pair.iloc[0]["file"]
+            image2 = "data/fairface/nomargin/" + st.session_state.attention_check_pair.iloc[1]["file"]
+            job = st.session_state.attention_check_job  # Use the same job for all attention checks
             is_attention_check = True
         else:  # Normal rounds
             image1 = "data/fairface/nomargin/" + st.session_state.data.iloc[current_index]["file"]
