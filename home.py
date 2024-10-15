@@ -81,7 +81,7 @@ if not st.session_state.consent_given:
 
                 Kies de persoon waarvan u denkt dat hij dat beroep heeft. Vertrouw op uw instinct!
 
-                Na 60 seconden gaat u terug naar de vragenlijst.
+                Na 1 minuut gaat u terug naar de vragenlijst.
                 """)
     
     st.write("&nbsp;")
