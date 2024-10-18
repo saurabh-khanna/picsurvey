@@ -20,18 +20,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-occupations = [
-            "dokter",
-            "astronaut",
-            "financieel directeur",
-            "wetenschapper",
-            "politieagent",
-            "bouwvakker",
-            "elektromonteur",
-            "verpleegkundige",
-            "kapper",
-            "leerkracht"
-        ]
+# List of non-gendered occupations
+occupations = ['a doctor', 'a lawyer', 'a nurse', 'an author', 'a teacher', 'an engineer', 'a scientist', 'a chef', 'an artist', 'an architect', 'a pilot', 'a journalist', 'a dentist', 'a therapist', 'an accountant', 'a musician', 'a designer', 'a programmer', 'a pharmacist', 'a plumber', 'an electrician', 'a librarian', 'an analyst', 'a consultant', 'an entrepreneur', 'a researcher', 'a technician', 'an editor', 'a translator', 'a veterinarian', 'a social worker', 'a photographer']
 
 # authenticate to Firestore with own credentials
 key_dict = json.loads(st.secrets["textkey"])
@@ -75,17 +65,13 @@ if not st.session_state.consent_given:
             st.image("./data/fairface/nomargin/changeface.gif")
     with col2_land:
         st.write("""
-                U bent nu bij PictoPercept - het laatste deel van de vragenlijst! Dit duurt in totaal **1 minuut**.
+                Welcome to the PictoPercept survey! You'll see pairs of photos and a job title, like "Who of these is a teacher?" or "Who of these is a painter?" Pick the person you think fits the job more by clicking the button.
 
-                U blijft twee foto's van gewone mensen zien van sociale media. En een beroep. Bijvoorbeeld: "Wie van deze personen is een leraar?" of "Wie van deze personen is een kapper?"
-
-                Kies de persoon waarvan u denkt dat hij dat beroep heeft. Vertrouw op uw instinct!
-
-                Na 1 minuut gaat u terug naar de vragenlijst.
+                Trust your instincts!
                 """)
     
     st.write("&nbsp;")
-    if st.button("Laten we beginnen!", type="primary", use_container_width=True):
+    if st.button("Let us begin!", type="primary", use_container_width=True):
         st.session_state.consent_given = True
         st.rerun()
 
@@ -111,7 +97,7 @@ if st.session_state.consent_given:
 
     ### Exit button ###
     time_elapsed = datetime.datetime.now() - st.session_state.start_time
-    if time_elapsed.total_seconds() > 65 and len(st.session_state.responses_df) >= 2:
+    if time_elapsed.total_seconds() > 125 and len(st.session_state.responses_df) >= 2:
         
         # Write to db here
         recordlist = st.session_state.responses_df.to_dict(orient='records')
@@ -123,14 +109,10 @@ if st.session_state.consent_given:
             write_to_firestore(record)
             progress = (idx + 1) / len(recordlist)
             progress_bar.progress(progress)
-            status_text.text(f"Uw antwoorden opslaan: {int(progress * 100)}%")
-
+            status_text.text(f"Saving your responses: {int(progress * 100)}%")
         # Completion message
-        status_text.text("Alles is klaar!")
-        st.write("&nbsp;")
-        redirect_link = f"https://surveys.thechoice.nl/s3/UVA2305-PictoPercept-Complete?choice_respondent={st.session_state.userid}"
-        st.markdown(f'<span style="font-size:20px;"><a href="{redirect_link}" target="_self">Geweldig, bedankt! Vul hier de vragenlijst in.</a></span>', unsafe_allow_html=True)
-        
+        status_text.text("All done!")
+                
     else:
         st.write("&nbsp;")
 
@@ -157,7 +139,7 @@ if st.session_state.consent_given:
             job = random.choice(occupations)
             is_attention_check = False
 
-        TEXT = "<span style='font-size:20px;'>Wie van deze personen is een **" + job.upper() + "**?</span>"
+        TEXT = "<span style='font-size:20px;'>Who of these is **" + job.upper() + "**?</span>"
         st.write(TEXT, unsafe_allow_html=True)
         
         def save_response(selected):
@@ -196,11 +178,11 @@ if st.session_state.consent_given:
             col1, col2 = st.columns(2, gap="large")
             with col1:
                 button1 = st.button(
-                    "Persoon 1", type="primary", key="btn1", on_click=save_response, args=[1], use_container_width=True
+                    "Person 1", type="primary", key="btn1", on_click=save_response, args=[1], use_container_width=True
                 )
             with col2:
                 button2 = st.button(
-                    "Persoon 2", type="primary", key="btn2", on_click=save_response, args=[2], use_container_width=True
+                    "Person 2", type="primary", key="btn2", on_click=save_response, args=[2], use_container_width=True
                 )
             
             col1.image(image1, use_column_width="always")
@@ -210,17 +192,17 @@ if st.session_state.consent_given:
         
         # Only show the timer and progress bar to 50% of users
         if st.session_state.show_timer_progress:
-            progress_bar = st.progress(0, text = "⏰ Probeer zo snel mogelijk te antwoorden.")
+            progress_bar = st.progress(0, text = "⏰ Try to answer as fast as possible.")
 
             # Loop from 1 to 5 seconds to update the progress bar
             for i in range(1, 6):
                 # Update the progress bar incrementally (each step is 20% progress)
                 if i == 1:
                     time.sleep(1)
-                    progress_text = "⏰ Probeer zo snel mogelijk te antwoorden. Tijdsduur: 1 seconde"
+                    progress_text = "⏰ Try to answer as fast as possible. Time taken: 1 second"
                 elif i == 5:
-                    progress_text = ":red[⏰ Probeer zo snel mogelijk te antwoorden. Tijdsduur: Meer dan 5 seconden!]"
+                    progress_text = ":red[⏰ Try to answer as fast as possible. Time taken: More than 5 seconds!]"
                 else:
-                    progress_text = "⏰ Probeer zo snel mogelijk te antwoorden. Tijdsduur: " + str(i) + " seconden"
+                    progress_text = "⏰ Try to answer as fast as possible. Time taken: " + str(i) + " seconds"
                 progress_bar.progress(i * 20, text=progress_text)  # i goes from 1 to 5, converting to percentage (20, 40, ..., 100)
                 time.sleep(1)
