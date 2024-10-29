@@ -20,9 +20,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# List of non-gendered occupations
-occupations = ['a doctor', 'a lawyer', 'a nurse', 'an author', 'a teacher', 'an engineer', 'a scientist', 'a chef', 'an artist', 'an architect', 'a pilot', 'a journalist', 'a dentist', 'a therapist', 'an accountant', 'a musician', 'a designer', 'a programmer', 'a pharmacist', 'a plumber', 'an electrician', 'a librarian', 'an analyst', 'a consultant', 'an entrepreneur', 'a researcher', 'a technician', 'an editor', 'a translator', 'a veterinarian', 'a social worker', 'a photographer']
-
 # authenticate to Firestore with own credentials
 key_dict = json.loads(st.secrets["textkey"])
 creds = service_account.Credentials.from_service_account_info(key_dict)
@@ -41,13 +38,13 @@ if "userid" not in st.session_state:
     if "choice_respondent" in st.query_params:
         st.session_state.userid = str(st.query_params.choice_respondent)
     else:
-        st.session_state.userid = "unresolved_" + str(random.randint(10000, 99999))
+        st.session_state.userid = "anonymous_" + str(random.randint(10000, 99999))
 
 st.sidebar.info("userid: " + st.session_state.userid)
 
 # Initialize responses DataFrame if not already in session
 if "responses_df" not in st.session_state:
-    st.session_state.responses_df = pd.DataFrame(columns=['userid', 'item', 'file', 'job', 'chosen', 'timestamp', 'attention_check'])
+    st.session_state.responses_df = pd.DataFrame(columns=['userid', 'item', 'file', 'chosen', 'timestamp', 'attention_check'])
 
 # Initial state to track if consent has bgiven
 if "consent_given" not in st.session_state:
@@ -65,10 +62,10 @@ if not st.session_state.consent_given:
             st.image("./data/fairface/nomargin/changeface.gif")
     with col2_land:
         st.write("""
-                Welcome to the PictoPercept survey! You'll see pairs of photos and a job title, like "Who of these is a teacher?" or "Who of these is a painter?" Pick the person you think fits the job more by clicking the button.
+            Imagine you are a film-maker. We will show you two images at a time, and ask who you will cast as the lead character in your next film. You must choose one person, and their picture is the only information you have. Your responses are anonymous, and the survey lasts 1 minute.
 
-                Trust your instincts!
-                """)
+            Trust your instincts!
+            """)
     
     st.write("&nbsp;")
     if st.button("Let us begin!", type="primary", use_container_width=True):
@@ -88,16 +85,14 @@ if st.session_state.consent_given:
         st.session_state.start_time = datetime.datetime.now()
         # Select the last pair of images for the attention check
         st.session_state.attention_check_pair = st.session_state.data.iloc[-2:]
-        # Randomly choose a job title for the attention check
-        st.session_state.attention_check_job = random.choice(occupations)
-
+    
     ### Randomization of progress bar and timer ###
     if "show_timer_progress" not in st.session_state:
         st.session_state.show_timer_progress = random.choice([True, False])  # Randomly choose to show timer or not
 
     ### Exit button ###
     time_elapsed = datetime.datetime.now() - st.session_state.start_time
-    if time_elapsed.total_seconds() > 125 and len(st.session_state.responses_df) >= 2:
+    if time_elapsed.total_seconds() > 65 and len(st.session_state.responses_df) >= 2:
         
         # Write to db here
         recordlist = st.session_state.responses_df.to_dict(orient='records')
@@ -110,8 +105,17 @@ if st.session_state.consent_given:
             progress = (idx + 1) / len(recordlist)
             progress_bar.progress(progress)
             status_text.text(f"Saving your responses: {int(progress * 100)}%")
+        
         # Completion message
         status_text.text("All done!")
+        st.write("&nbsp;")
+        with st.expander("Wish to view your data?"):
+            st.info("This is _not_ shown during a real survey.")
+            
+            file_paths = ["./data/fairface/label_train.csv", "./data/fairface/label_val.csv"]
+            df2 = pd.concat((pd.read_csv(file) for file in file_paths), ignore_index=True)
+            df2 = pd.merge(st.session_state.responses_df, df2, on='file', how='inner')
+            st.dataframe(df2)
                 
     else:
         st.write("&nbsp;")
@@ -121,26 +125,21 @@ if st.session_state.consent_given:
         if current_index == 4:  # Attention check at iteration 3 (remember 0-based indexing)
             image1 = "data/fairface/nomargin/" + st.session_state.attention_check_pair.iloc[0]["file"]
             image2 = "data/fairface/nomargin/" + st.session_state.attention_check_pair.iloc[1]["file"]
-            job = st.session_state.attention_check_job  # Use the same job for all attention checks
             is_attention_check = True
         elif current_index == 18:  # Attention check at iteration 10 (swapped images)
             image1 = "data/fairface/nomargin/" + st.session_state.attention_check_pair.iloc[1]["file"]
             image2 = "data/fairface/nomargin/" + st.session_state.attention_check_pair.iloc[0]["file"]
-            job = st.session_state.attention_check_job  # Use the same job for all attention checks
             is_attention_check = True
         elif current_index == 40:  # Attention check at iteration 21 (original order images)
             image1 = "data/fairface/nomargin/" + st.session_state.attention_check_pair.iloc[0]["file"]
             image2 = "data/fairface/nomargin/" + st.session_state.attention_check_pair.iloc[1]["file"]
-            job = st.session_state.attention_check_job  # Use the same job for all attention checks
             is_attention_check = True
         else:  # Normal rounds
             image1 = "data/fairface/nomargin/" + st.session_state.data.iloc[current_index]["file"]
             image2 = "data/fairface/nomargin/" + st.session_state.data.iloc[current_index + 1]["file"]
-            job = random.choice(occupations)
             is_attention_check = False
 
-        TEXT = "<span style='font-size:20px;'>Who of these is **" + job.upper() + "**?</span>"
-        st.write(TEXT, unsafe_allow_html=True)
+        st.write("Who of these would you cast as the lead charater in your next film?")
         
         def save_response(selected):
             current_time = datetime.datetime.now()
@@ -151,7 +150,6 @@ if st.session_state.consent_given:
                         'userid': st.session_state.userid,
                         'item': (current_index // 2) + 1,
                         'file': image1.replace("data/fairface/nomargin/", ""),
-                        'job': job,
                         'chosen': selected == 1,
                         'timestamp': current_time.strftime("%Y-%m-%d %H:%M:%S"),
                         'show_timer_progress': st.session_state.show_timer_progress,  # Save the randomized decision
@@ -161,7 +159,6 @@ if st.session_state.consent_given:
                         'userid': st.session_state.userid,
                         'item': (current_index // 2) + 1,
                         'file': image2.replace("data/fairface/nomargin/", ""),
-                        'job': job,
                         'chosen': selected == 2,
                         'timestamp': current_time.strftime("%Y-%m-%d %H:%M:%S"),
                         'show_timer_progress': st.session_state.show_timer_progress,
